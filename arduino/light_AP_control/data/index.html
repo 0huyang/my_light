@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>wifi连接</title>
+	<link href="./bootstrap.min.css" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script type="text/javascript" src="./jquery-3.5.1.min.js"></script>
+	<script type="text/javascript" src="./bootstrap.min.js"></script>
+  </head>
+  <body>
+	<div style="text-align:center;">
+	  <h1 style="background-color:rgba(155,255,30,0.75)">欢迎使用</h1>
+	  <div  class="starter-template";clear:both;text-align:center;">
+		<h3 style="background-color:rgba(255,10,10,0.75);color:#ffffff;">基本信息</h3>
+		<div style="color:#40B3DF;">
+          <p>WIFI连接状态: <span id="wifiStatus"></span></p>
+		  <p>本地IP: <span id="ipAddress"></span></p>
+        <div/>
+	  </div>
+	  <div class="starter-template">
+	    <h3 style="background-color:rgba(255,10,10,0.75);color:#ffffff;">wifi连接信息</h3>
+		<form action="">
+            WIFI名称: <select type="text" id="wifiname" style="width:150px" ></select>
+            </form>
+            <form action="">
+            WIFI密码: <input type="password" id="wifipwd"  />
+            </form>    <br/>   
+			<p><span id="checkInfo"style="color:rgba(255,10,10,0.75)"></span></p>
+            <button onclick='setWifi(wifiname.value,wifipwd.value)' >连接</button> 
+	  </div>
+  </body>
+  <script type="text/javascript">
+    $(document).ready(function () {
+        getWifiSsid();
+		getWifiStatus();
+    })
+	function getWifiSsid() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+       if (this.status == 200) {
+        var arr = this.responseText.split(",");
+		$.each(arr,function(index,obj){
+			$("#wifiname").append("<option value='"+obj+"'>"+obj+"</option>");
+		})
+       } 
+      };
+      xhttp.open("GET", "wifi_ssid", true);
+      xhttp.send();
+    }
+	function setWifi(wifiname,wifipwd){
+	  var xhttp1 = new XMLHttpRequest();
+	  var wifiSelect=document.getElementById("wifiname");
+	  
+	  if (wifiname.length==0){
+        document.getElementById("checkInfo").innerHTML="请输入WIFI信息！";
+        return;
+      }else{
+	    document.getElementById("checkInfo").innerHTML="";
+	  }
+	  xhttp1.onreadystatechange = function() {
+       if (this.status == 200) {
+        if (this.responseText == "fail"){
+		   document.getElementById("checkInfo").innerHTML="wifi信息有误,请重新连接！";
+		}else{
+		  document.getElementById("checkInfo").innerHTML="";
+		  getWifiStatus();
+		}
+       }
+      };
+	  var requestString = "/wifi?wifiname="+wifiname+"&pwd="+wifipwd;
+	  xhttp1.open("GET", requestString, true);
+      xhttp1.send(null);
+	}
+	
+	function getWifiStatus() {
+	  var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+       if (this.status == 200) {
+        var arr = this.responseText.split(",");
+		if (arr[0] != "offline"){
+			document.getElementById("wifiStatus").innerHTML="已成功连接"+ arr[0];
+		}else{
+		    document.getElementById("wifiStatus").innerHTML= "离线";
+		}
+		document.getElementById("ipAddress").innerHTML= arr[1];
+       } 
+      };
+      xhttp.open("GET", "wifi_status", true);
+      xhttp.send();
+	}
+  </script>
+</html>
