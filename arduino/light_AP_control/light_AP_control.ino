@@ -42,7 +42,7 @@ char auth[] = "";//* blynk验证码，在blynk APP中获取
 IPAddress blynk_server = IPAddress(0,0,0,0); //BLYNK服务器地址，请勿修改，除非你有自己的BLYNK服务器
 
 //---LED 参数---
-#define NUM_LEDS 120 //* LED灯数量，根据你的情况做修改。
+#define NUM_LEDS 60 //* LED灯数量，根据你的情况做修改。
 //#define LED_TYPE WS2812B //灯带型号，一般不需要改变
 //#define COLOR_ORDER GRB //颜色指令
 #define BUFFER_LEN 1024
@@ -52,6 +52,8 @@ int g = 255;
 int b = 255;
 
 unsigned int musicPort = 7777;//音乐控制接口
+char packetBuffer[BUFFER_LEN];
+uint8_t N = 0;
 
 //NeoPixelBus settings
 const uint8_t PixelPin = 3;  // make sure to set this to the correct pin, ignored for Esp8266(set to 3 by default for DMA)
@@ -306,6 +308,19 @@ void Lightfunc() {
   }
 }
 
+void Musicfunc() {
+  Blynk.virtualWrite(V2, 255);
+  Blynk.virtualWrite(V1, 0);//音乐模式灯亮
+  int len = port.read(packetBuffer, BUFFER_LEN);
+  for (int i = 0; i < len; i += 4) {
+     packetBuffer[len] = 0;
+     N = packetBuffer[i];
+     RgbColor pixel((uint8_t)packetBuffer[i + 1], (uint8_t)packetBuffer[i + 2], (uint8_t)packetBuffer[i + 3]);
+     ledstrip.SetPixelColor(N, pixel);
+  }
+  ledstrip.Show();
+}
+
 //----Blynk 虚拟管脚定义----//
 BLYNK_CONNECTED() {
   Blynk.syncAll();
@@ -360,13 +375,14 @@ void loop() {
     }
     Blynk.run();
     int packetSize = port.parsePacket();
+    Serial.println(packetSize);
     if (packetSize) {
-      Blynk.virtualWrite(V0, 255);
-      Blynk.virtualWrite(V1, 0);//音乐模式灯亮
+      Musicfunc();
     } else {
       Lightfunc();
     }
     timer.run();
+    server.handleClient();
   }
-  server.handleClient();
+//  server.handleClient();
 }
